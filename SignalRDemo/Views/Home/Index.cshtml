@@ -1,0 +1,137 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<style>
+        label {
+            display: inline-block;
+            width: 100px;
+        }
+        input[type=text] {
+            width: 500px;
+        }
+
+    </style>
+
+<h2>Boeken
+    <button id="load">
+        Laden</button></h2>
+<ul id="books">
+</ul>
+<hr />
+<fieldset>
+    <legend>Bijwerken</legend>
+    <form id="updateBook" action="/api/books" method="put" style="display: none;">
+        <input type="hidden" name="id" id="id" />
+        <label for="title">
+            Title:</label>
+        <input type="text" name="title" id="title" />
+        <br />
+        <label for="author">
+            Author:</label>
+        <input type="text" name="author" id="author" />
+        <br />
+        <input type="submit" value="Bewaren" />
+    </form>
+</fieldset>
+<hr />
+<fieldset>
+    <legend>Toevoegen</legend>
+    <form id="newBook" action="/api/books" method="post">
+        <label for="title">
+            Title:</label>
+        <input type="text" name="title" id="title" />
+        <br />
+        <label for="author">
+            Author:</label>
+        <input type="text" name="author" id="author" />
+        <br />
+        <input type="submit" value="Bewaren" />
+    </form>
+</fieldset>
+
+@section scripts
+{
+    <script src="~/Scripts/jquery.signalR-0.5.3.js"></script>
+    <script src="~/signalr/hubs"></script>
+    <script>
+        $(function () {
+            'use strict';
+            var hub = $.connection.booksHub;
+
+            function renderBook(li, book) {
+                $(li).text(book.Title + " by " + book.Author).attr("data-id", book.Id).data("title", book.Title).data("author", book.Author);
+            }
+
+            hub.bookUpdated = function (book) {
+                var form, li;
+                form = $("#updateBook");
+                form.slideUp();
+                li = $("li[data-id=" + book.Id + "]");
+                if (li.length === 0) {
+                    li = $("<li>").appendTo("#books");
+                }
+                
+                renderBook(li.get(0), book);
+                li.animate({ "backgroundColor": "yellow" }, 500, function() {
+                    li.css("background-color", "");
+                });
+            };
+
+            function loadBooks() {
+                hub.getBooks().then(function (books) {
+                    var ul = $("#books");
+                    ul.empty();
+                    $.each(books, function () {
+                        var newLi = $("<li>").appendTo(ul);
+                        renderBook(newLi, this);
+                    });
+                });
+            }
+
+
+            $("#books").on("click", "li", function () {
+                var form, li, id;
+
+                form = $("#updateBook");
+                form.slideDown();
+                li = $(this);
+                id = li.data("id");
+                $("#id", form).val(id);
+                $("#title", form).val(li.data("title"));
+                $("#author", form).val(li.data("author"));
+                form.attr("action", "/api/books/" + id);
+            });
+
+
+            $("#updateBook").submit(function (e) {
+                var form, book;
+                e.preventDefault();
+                form = $(this);
+
+                book = {
+                    id: $("#id", form).val(),
+                    title: $("#title", form).val(),
+                    author: $("#author", form).val()
+                };
+                hub.updateBook(book);
+            });
+
+            $("#newBook").submit(function (e) {
+                var form, book;
+                e.preventDefault();
+                form = $(this);
+
+                book = {
+                    title: $("#title", form).val(),
+                    author: $("#author", form).val()
+                };
+                hub.addBook(book);
+            });
+
+            $.connection.hub.start(loadBooks);
+            $("#load").click(loadBooks);
+        });
+
+    </script>
+}
