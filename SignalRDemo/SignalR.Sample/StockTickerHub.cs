@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+﻿using System.Collections.Generic;
+
 using SignalR.Hubs;
 
-namespace SignalR.StockTicker.SignalR.StockTicker
+namespace SignalRDemo.SignalR.Sample
 {
     [HubName("stockTicker")]
     public class StockTickerHub : Hub

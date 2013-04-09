@@ -6,41 +6,41 @@ namespace SignalRDemo.Models
 { 
     public class BooksRepository : IBooksRepository
     {
-        private static List<Book> _books;
+        private static readonly List<Book> Books;
 
         static BooksRepository()
         {
-            _books = new List<Book>()
+            Books = new List<Book>
             {
-                new Book()
-                {
+                new Book
+                    {
                     Id = 1,
                     Title = "The Ultimate Hitchhiker's Guide to the Galaxy",
                     Author = "Douglas Adams",
                     ImageName = "TheUltimateHitchhikersGuide.jpg",
                 },
-                new Book()
+                new Book
                 {
                     Id = 2,
                     Title = "2001: A Space Odyssey",
                     Author = "Arthur C. Clarke",
                     ImageName = "2001ASpaceOdyssey.jpg",
                 },
-                new Book()
+                new Book
                 {
                     Id = 3,
                     Title = "The War of the Worlds",
                     Author = "H G Wells",
                     ImageName = "TheWaroftheWorlds.jpg",
                 },
-                new Book()
+                new Book
                 {
                     Id = 4,
                     Title = "Jurassic Park",
                     Author = "Michael Crichton",
                     ImageName = "JurassicPark.jpg",
                 },
-                new Book()
+                new Book
                 {
                     Id = 5,
                     Title = "I, Robot",
@@ -52,41 +52,42 @@ namespace SignalRDemo.Models
 
         public List<Book> GetBooks()
         {
-            return _books.OrderBy(b => b.Id).ToList();
+            return Books.OrderBy(b => b.Id).ToList();
         }
 
         public Book GetBook(int id)
         {
-            return _books.SingleOrDefault(b => b.Id == id);
+            return Books.SingleOrDefault(b => b.Id == id);
         }
 
         public void Dispose()
         {
         }
 
-        public Book AddBook(Book newBook)
+        public Book AddBook(Book book)
         {
-            newBook.Id = Environment.TickCount;
-            _books.Add(newBook);
+            book.Id = Environment.TickCount;
+            Books.Add(book);
 
-            return newBook;
+            return book;
         }
 
-        public Book UpdateBook(Book newBook)
+        public Book UpdateBook(Book book)
         {
-            var oldBook = _books.Single(b => b.Id == newBook.Id);
-            _books.Remove(oldBook);
-            _books.Add(newBook);
-            return newBook;
+            var persistedBook = Books.Single(b => b.Id == book.Id);
+            Books.Remove(persistedBook);
+            Books.Add(book);
+
+            return book;
         }
 
 
         public void DeleteBook(int id)
         {
-            var oldBook = _books.SingleOrDefault(b => b.Id == id);
-            if (oldBook != null)
+            var persistedBook = Books.SingleOrDefault(b => b.Id == id);
+            if (persistedBook != null)
             {
-                _books.Remove(oldBook);
+                Books.Remove(persistedBook);
             }
         }
     }

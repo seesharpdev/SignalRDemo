@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Transactions;
-using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
+
 using DotNetOpenAuth.AspNet;
 using Microsoft.Web.WebPages.OAuth;
 using WebMatrix.WebData;
+
 using SignalRDemo.Filters;
 using SignalRDemo.Models;
 
@@ -252,8 +253,8 @@ namespace SignalRDemo.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult ExternalLoginConfirmation(RegisterExternalLoginModel model, string returnUrl)
         {
-            string provider = null;
-            string providerUserId = null;
+            string provider;
+            string providerUserId;
 
             if (User.Identity.IsAuthenticated || !OAuthWebSecurity.TryDeserializeProviderUserId(model.ExternalLoginData, out provider, out providerUserId))
             {
@@ -262,19 +263,16 @@ namespace SignalRDemo.Controllers
 
             if (ModelState.IsValid)
             {
-                // Insert a new user into the database
-                using (UsersContext db = new UsersContext())
+                using (var context = new UsersContext())
                 {
-                    UserProfile user = db.UserProfiles.FirstOrDefault(u => u.UserName.ToLower() == model.UserName.ToLower());
-                    // Check if user already exists
-                    if (user == null)
+                    var userProfile = context.UserProfiles.FirstOrDefault(u => u.UserName.ToLower() == model.UserName.ToLower());
+                    if (userProfile == null)
                     {
-                        // Insert name into the profile table
-                        db.UserProfiles.Add(new UserProfile { UserName = model.UserName });
-                        db.SaveChanges();
+                        context.UserProfiles.Add(new UserProfile { UserName = model.UserName });
+                        context.SaveChanges();
 
                         OAuthWebSecurity.CreateOrUpdateAccount(provider, providerUserId, model.UserName);
-                        OAuthWebSecurity.Login(provider, providerUserId, createPersistentCookie: false);
+                        OAuthWebSecurity.Login(provider, providerUserId, false);
 
                         return RedirectToLocal(returnUrl);
                     }
@@ -311,7 +309,7 @@ namespace SignalRDemo.Controllers
         public ActionResult RemoveExternalLogins()
         {
             ICollection<OAuthAccount> accounts = OAuthWebSecurity.GetAccountsFromUserName(User.Identity.Name);
-            List<ExternalLogin> externalLogins = new List<ExternalLogin>();
+            var externalLogins = new List<ExternalLogin>();
             foreach (OAuthAccount account in accounts)
             {
                 AuthenticationClientData clientData = OAuthWebSecurity.GetOAuthClientData(account.Provider);

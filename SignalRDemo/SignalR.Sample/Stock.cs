@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SignalR.StockTicker.SignalR.StockTicker
+namespace SignalRDemo.SignalR.Sample
 {
     public class Stock
     {

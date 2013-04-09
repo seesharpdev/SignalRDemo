@@ -2,19 +2,18 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using SignalR.Hubs;
-using SignalR.Hosting.AspNet;
-using SignalR.Infrastructure;
 
-namespace SignalR.StockTicker.SignalR.StockTicker
+using SignalR;
+
+namespace SignalRDemo.SignalR.Sample
 {
     public class StockTicker
     {
         private readonly static Lazy<StockTicker> _instance = new Lazy<StockTicker>(() => new StockTicker());
-        private readonly static object _marketStateLock = new object();
+        private readonly static object MarketStateLock = new object();
         private readonly ConcurrentDictionary<string, Stock> _stocks = new ConcurrentDictionary<string, Stock>();
-        private readonly double _rangePercent = .008; //stock can go up or down by a percentage of this factor on each change
-        private readonly int _updateInterval = 250; //ms
+        private const double RangePercent = .008; //stock can go up or down by a percentage of this factor on each change
+        private const int UpdateInterval = 250; //ms
         // This is used as an singleton instance so we'll never both disposing the timer
         private Timer _timer;
         private readonly object _updateStockPricesLock = new object();
@@ -50,12 +49,12 @@ namespace SignalR.StockTicker.SignalR.StockTicker
         {
             if (MarketState != MarketState.Open || MarketState != MarketState.Opening)
             {
-                lock (_marketStateLock)
+                lock (MarketStateLock)
                 {
                     if (MarketState != MarketState.Open || MarketState != MarketState.Opening)
                     {
                         MarketState = MarketState.Opening;
-                        _timer = new Timer(UpdateStockPrices, null, _updateInterval, _updateInterval);
+                        _timer = new Timer(UpdateStockPrices, null, UpdateInterval, UpdateInterval);
                         MarketState = MarketState.Open;
                         BroadcastMarketStateChange(MarketState.Open);
                     }
@@ -67,7 +66,7 @@ namespace SignalR.StockTicker.SignalR.StockTicker
         {
             if (MarketState == MarketState.Open || MarketState == MarketState.Opening)
             {
-                lock (_marketStateLock)
+                lock (MarketStateLock)
                 {
                     if (MarketState == MarketState.Open || MarketState == MarketState.Opening)
                     {
@@ -85,7 +84,7 @@ namespace SignalR.StockTicker.SignalR.StockTicker
 
         public void Reset()
         {
-            lock (_marketStateLock)
+            lock (MarketStateLock)
             {
                 if (MarketState != MarketState.Closed)
                 {
@@ -145,7 +144,7 @@ namespace SignalR.StockTicker.SignalR.StockTicker
 
             // Update the stock price by a random factor of the range percent
             var random = new Random((int)Math.Floor(stock.Price));
-            var percentChange = random.NextDouble() * _rangePercent;
+            var percentChange = random.NextDouble() * RangePercent;
             var pos = random.NextDouble() > .51;
             var change = Math.Round(stock.Price * (decimal)percentChange, 2);
             change = pos ? change : -change;
@@ -173,7 +172,7 @@ namespace SignalR.StockTicker.SignalR.StockTicker
             }
         }
 
-        private void BroadcastStockPrice(Stock stock)
+        private static void BroadcastStockPrice(Stock stock)
         {
             GetClients().updateStockPrice(stock);
         }
